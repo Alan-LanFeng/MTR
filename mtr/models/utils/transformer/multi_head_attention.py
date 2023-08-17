@@ -89,7 +89,7 @@ class MultiheadAttention(nn.Module):
             self.in_proj_bias = Parameter(torch.empty(3 * embed_dim, **factory_kwargs))
         else:
             self.register_parameter('in_proj_bias', None)
-        self.out_proj = nn.Linear(self.vdim, self.vdim, bias=bias, **factory_kwargs)
+        self.out_proj = nn.Linear(self.vdim, self.vdim, bias=bias)
 
         if add_bias_kv:
             self.bias_k = Parameter(torch.empty((1, 1, embed_dim), **factory_kwargs))
