@@ -171,12 +171,14 @@ def train_model(model, optimizer, train_loader, optim_cfg,
                 )
 
             # eval the model
-            if test_loader is not None and (trained_epoch % ckpt_save_interval == 0 or trained_epoch in [1, 2, 4] or trained_epoch > total_epochs - 10):
-                from eval_utils.eval_utils import eval_one_epoch
+            #eval the model
+            if test_loader is not None and (trained_epoch % ckpt_save_interval == 0 or trained_epoch in [1, 2,
+                                                                                                         4] or trained_epoch > total_epochs - 10):
+                from eval_utils.eval_utils import eval_one_epoch_sim
 
                 pure_model = model
                 torch.cuda.empty_cache()
-                tb_dict = eval_one_epoch(
+                tb_dict = eval_one_epoch_sim(
                     cfg, pure_model, test_loader, epoch_id=trained_epoch, logger=logger, dist_test=dist_train,
                     result_dir=eval_output_dir, save_to_file=False, logger_iter_interval=max(logger_iter_interval // 5, 1)
                 )
@@ -184,7 +186,9 @@ def train_model(model, optimizer, train_loader, optim_cfg,
                     for key, val in tb_dict.items():
                         tb_log.add_scalar('eval/' + key, val, trained_epoch)
 
-                    if 'mAP' in tb_dict:
+                    sign = 'metametric'
+
+                    if sign in tb_dict:
                         best_record_file = eval_output_dir / ('best_eval_record.txt')
 
                         try:
@@ -200,9 +204,9 @@ def train_model(model, optimizer, train_loader, optim_cfg,
 
 
                         with open(best_record_file, 'a') as f:
-                            print(f'epoch_{trained_epoch} mAP {tb_dict["mAP"]}', file=f)
+                            print(f'epoch_{trained_epoch} {sign} {tb_dict[sign]}', file=f)
 
-                        if best_performance == -1 or tb_dict['mAP'] > float(best_performance):
+                        if best_performance == -1 or tb_dict[sign] > float(best_performance):
                             ckpt_name = ckpt_save_dir / 'best_model'
                             save_checkpoint(
                                 checkpoint_state(model, epoch=cur_epoch, it=accumulated_iter), filename=ckpt_name,
@@ -210,7 +214,7 @@ def train_model(model, optimizer, train_loader, optim_cfg,
                             logger.info(f'Save best model to {ckpt_name}')
 
                             with open(best_record_file, 'a') as f:
-                                print(f'best_epoch_{trained_epoch} mAP {tb_dict["mAP"]}', file=f)
+                                print(f'best_epoch_{trained_epoch} {sign} {tb_dict[sign]}', file=f)
                         else:
                             with open(best_record_file, 'a') as f:
                                 print(f'{best_src_data[-1].strip()}', file=f)

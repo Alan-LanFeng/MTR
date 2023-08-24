@@ -13,6 +13,7 @@ import torch
 from mtr.datasets.dataset import DatasetTemplate
 from mtr.utils import common_utils
 from mtr.config import cfg
+from waymo_open_dataset.utils.sim_agents import submission_specs
 
 
 class WaymoDataset(DatasetTemplate):
@@ -95,12 +96,24 @@ class WaymoDataset(DatasetTemplate):
         obj_trajs_past = obj_trajs_full[:, :current_time_index + 1]
         obj_trajs_future = obj_trajs_full[:, current_time_index + 1:]
 
-        center_objects, track_index_to_predict = self.get_interested_agents(
-            track_index_to_predict=track_index_to_predict,
-            obj_trajs_full=obj_trajs_full,
-            current_time_index=current_time_index,
-            obj_types=obj_types, scene_id=scene_id
-        )
+        if self.mode == 'test':
+            scenario = info['scenario']
+            sim_idx = submission_specs.get_sim_agent_ids(scenario)
+            sim_idx = np.concatenate([np.where(idx==obj_ids)[0] for idx in sim_idx])
+            center_objects, track_index_to_predict = self.get_interested_agents(
+                track_index_to_predict=sim_idx,
+                obj_trajs_full=obj_trajs_full,
+                current_time_index=current_time_index,
+                obj_types=obj_types, scene_id=scene_id
+            )
+
+        else:
+            center_objects, track_index_to_predict = self.get_interested_agents(
+                track_index_to_predict=track_index_to_predict,
+                obj_trajs_full=obj_trajs_full,
+                current_time_index=current_time_index,
+                obj_types=obj_types, scene_id=scene_id
+            )
 
         (obj_trajs_data, obj_trajs_mask, obj_trajs_pos, obj_trajs_last_pos, obj_trajs_future_state, obj_trajs_future_mask, center_gt_trajs,
             center_gt_trajs_mask, center_gt_final_valid_idx,
@@ -239,6 +252,11 @@ class WaymoDataset(DatasetTemplate):
         ).view(num_center_objects, num_objects, num_timestamps, 2)
 
         obj_trajs[:, :, :, heading_index] -= center_heading[:, None, None]
+        # change heading to [-pi, pi]
+        heading = obj_trajs[:, :, :, heading_index]
+        heading[heading > np.pi] -= 2 * np.pi
+        heading[heading < -np.pi] += 2 * np.pi
+        obj_trajs[:, :, :, heading_index] = heading
 
         # rotate direction of velocity
         if rot_vel_index is not None:
@@ -325,7 +343,7 @@ class WaymoDataset(DatasetTemplate):
             center_heading=center_objects[:, 6],
             heading_index=6, rot_vel_index=[7, 8]
         )
-        ret_obj_trajs_future = obj_trajs_future[:, :, :, [0, 1, 7, 8]]  # (x, y, vx, vy)
+        ret_obj_trajs_future = obj_trajs_future[:, :, :, [0, 1, 2, 6]]  # (x, y, vx, vy)
         ret_obj_valid_mask_future = obj_trajs_future[:, :, :, -1]  # (num_center_obejcts, num_objects, num_timestamps_future)  # TODO: CHECK THIS, 20220322
         ret_obj_trajs_future[ret_obj_valid_mask_future == 0] = 0
 
@@ -486,12 +504,13 @@ class WaymoDataset(DatasetTemplate):
             angle=center_objects_world[:, 6].view(num_center_objects)
         ).view(num_center_objects, num_modes, num_timestamps, num_feat)
         pred_trajs_world[:, :, :, 0:2] += center_objects_world[:, None, None, 0:2]
+        pred_trajs_world[:, :, :, 5] += center_objects_world[:, None, None, 2]
 
         pred_dict_list = []
         for obj_idx in range(num_center_objects):
             single_pred_dict = {
                 'scenario_id': input_dict['scenario_id'][obj_idx],
-                'pred_trajs': pred_trajs_world[obj_idx, :, :, 0:2].cpu().numpy(),
+                'pred_trajs': pred_trajs_world[obj_idx, :, :, [0,1,5,6]].cpu().numpy(),
                 'pred_scores': pred_scores[obj_idx, :].cpu().numpy(),
                 'object_id': input_dict['center_objects_id'][obj_idx],
                 'object_type': input_dict['center_objects_type'][obj_idx],
@@ -517,11 +536,83 @@ class WaymoDataset(DatasetTemplate):
                 metric_result_str += '%s: %.4f \n' % (key, metric_results[key])
             metric_result_str += '\n'
             metric_result_str += result_format_str
+
+            return metric_result_str, metric_results
+        elif eval_method == 'sim_agents':
+            from .waymo_eval import sim_agents_evaluation
+            from waymo_open_dataset.protos import sim_agents_submission_pb2
+            from waymo_open_dataset.wdl_limited.sim_agents_metrics import metrics
+            from waymo_open_dataset.wdl_limited.sim_agents_metrics import metric_features
+            scene_id = [dic['scenario_id'] for dic in pred_dicts]
+            unique_scene_id = np.unique(scene_id)
+            # get project root path
+            result_list = []
+            for id in unique_scene_id:
+                scene_pred_dicts = [dic for dic in pred_dicts if dic['scenario_id'] == id]
+                with open(self.data_path / f'sample_{id}.pkl', 'rb') as f:
+                    info = pickle.load(f)
+                scenario = info['scenario']
+
+                joint_scenes = []
+                for j in range(32):
+                    j_s = get_joint_scene(scene_pred_dicts,j%6)
+                    submission_specs.validate_joint_scene(j_s, scenario)
+                    joint_scenes.append(j_s)
+                    # single_scene_features = metric_features.compute_metric_features(
+                    #     scenario, j_s)
+                    #print(single_scene_features)
+
+                scenario_rollouts = sim_agents_submission_pb2.ScenarioRollouts(
+                    # Note: remember to include the Scenario ID in the proto message.
+                    joint_scenes=joint_scenes, scenario_id=scenario.scenario_id)
+                submission_specs.validate_scenario_rollouts(scenario_rollouts, scenario)
+
+                config = metrics.load_metrics_config()
+                scenario_metrics = metrics.compute_scenario_metrics_for_bundle(
+                    config, scenario, scenario_rollouts)
+                result_list.append(scenario_metrics)
+                break
+            total_result = get_tb_from_metric_results(result_list)
+
+            return total_result,total_result
+
         else:
             raise NotImplementedError
 
         return metric_result_str, metric_results
 
+def get_tb_from_metric_results(metric_results):
+    total_result = {}
+    for result in metric_results:
+        for field_descriptor, value in result.ListFields():
+            name = field_descriptor.name
+            if 'id' in name:
+                continue
+            if name not in total_result:
+                total_result[name] = []
+            total_result[name].append(value)
+
+    for key,value in total_result.items():
+        total_result[key] = np.array(value).mean()
+
+
+    return total_result
+
+def get_joint_scene(scene_pred_dicts,idx):
+    from waymo_open_dataset.protos import sim_agents_submission_pb2
+    simulated_trajectories = []
+    for pred in scene_pred_dicts:
+        traj = pred['pred_trajs'][idx]
+        # get heading from traj
+        heading = np.arctan2(traj[1:, 1] - traj[:-1, 1], traj[1:, 0] - traj[:-1, 0])
+        heading = np.concatenate([heading, heading[[-1]]])
+        simulated_trajectories.append(sim_agents_submission_pb2.SimulatedTrajectory(
+            center_x=traj[:, 0], center_y=traj[:, 1],
+            center_z=traj[:, 2], heading=traj[:, 3],
+            object_id=pred['object_id']
+        ))
+    return sim_agents_submission_pb2.JointScene(
+        simulated_trajectories=simulated_trajectories)
 
 if __name__ == '__main__':
     import argparse

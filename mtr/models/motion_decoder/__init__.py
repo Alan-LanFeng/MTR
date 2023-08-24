@@ -5,10 +5,12 @@
 
 
 from .mtr_decoder import MTRDecoder
-
+from .act_decoder import ACTDecoder
 
 __all__ = {
-    'MTRDecoder': MTRDecoder
+    'MTRDecoder': MTRDecoder,
+    'ACTDecoder': ACTDecoder,
+
 }
 
 

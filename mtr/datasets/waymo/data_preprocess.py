@@ -130,6 +130,8 @@ def decode_map_features_from_proto(map_features):
 
             map_infos['speed_bump'].append(cur_info)
 
+        elif cur_data.driveway.ByteSize() > 0:
+            pass
         else:
             print(cur_data)
             raise ValueError

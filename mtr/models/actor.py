@@ -1,6 +1,6 @@
 # Motion Transformer (MTR): https://arxiv.org/abs/2209.13508
 # Published at NeurIPS 2022
-# Written by Shaoshuai Shi 
+# Written by Shaoshuai Shi
 # All Rights Reserved
 
 
@@ -13,13 +13,12 @@ from .context_encoder import build_context_encoder
 from .motion_decoder import build_motion_decoder
 
 
-class MotionTransformer(nn.Module):
+class SimAgent(nn.Module):
     def __init__(self, config):
         super().__init__()
         self.model_cfg = config
 
         self.context_encoder = build_context_encoder(self.model_cfg.CONTEXT_ENCODER)
-        # print params number
         print('Number of parameters: {}'.format(sum([p.data.nelement() for p in self.context_encoder.parameters()])))
         self.motion_decoder = build_motion_decoder(
             in_channels=self.context_encoder.num_out_channels,

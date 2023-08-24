@@ -20,6 +20,7 @@ from mtr.datasets import build_dataloader
 from mtr.config import cfg, cfg_from_list, cfg_from_yaml_file, log_config_to_file
 from mtr.utils import common_utils
 from mtr.models import model as model_utils
+from mtr.models import actor as actor_utils
 
 from train_utils.train_utils import train_model
 
@@ -165,7 +166,7 @@ def main():
         add_worker_init_fn=args.add_worker_init_fn,
     )
 
-    model = model_utils.MotionTransformer(config=cfg.MODEL)
+    model = actor_utils.SimAgent(config=cfg.MODEL)
     if not args.without_sync_bn:
         model = torch.nn.SyncBatchNorm.convert_sync_batchnorm(model)
     model.cuda()
