@@ -130,11 +130,10 @@ def decode_map_features_from_proto(map_features):
 
             map_infos['speed_bump'].append(cur_info)
 
-        elif cur_data.driveway.ByteSize() > 0:
-            pass
+        # elif cur_data.driveway.ByteSize() > 0:
+        #     pass
         else:
-            print(cur_data)
-            raise ValueError
+            pass
 
         polylines.append(cur_polyline)
         cur_info['polyline_index'] = (point_cnt, point_cnt + len(cur_polyline))
@@ -214,7 +213,9 @@ def get_infos_from_protos(data_path, output_path=None, num_workers=8):
     from functools import partial
     if output_path is not None:
         os.makedirs(output_path, exist_ok=True)
-
+    src_files = glob.glob(os.path.join(data_path, '*.tfrecord*'))
+    src_files.sort()
+    process_waymo_data_with_scenario_proto(src_files, output_path=output_path)
     func = partial(
         process_waymo_data_with_scenario_proto, output_path=output_path
     )
