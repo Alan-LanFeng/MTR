@@ -213,9 +213,9 @@ def get_infos_from_protos(data_path, output_path=None, num_workers=8):
     from functools import partial
     if output_path is not None:
         os.makedirs(output_path, exist_ok=True)
-    src_files = glob.glob(os.path.join(data_path, '*.tfrecord*'))
-    src_files.sort()
-    process_waymo_data_with_scenario_proto(src_files, output_path=output_path)
+    # src_files = glob.glob(os.path.join(data_path, '*.tfrecord*'))
+    # src_files.sort()
+    # process_waymo_data_with_scenario_proto(src_files, output_path=output_path)
     func = partial(
         process_waymo_data_with_scenario_proto, output_path=output_path
     )
