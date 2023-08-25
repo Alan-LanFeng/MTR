@@ -425,7 +425,7 @@ class ACTDecoder(nn.Module):
             # total loss
             weight_cls = self.model_cfg.LOSS_WEIGHTS.get('cls', 1.0)
             weight_reg = self.model_cfg.LOSS_WEIGHTS.get('reg', 1.0)
-            weight_heading = self.model_cfg.LOSS_WEIGHTS.get('vel', 0.2)
+            weight_heading = self.model_cfg.LOSS_WEIGHTS.get('heading', 0.2)
             weight_z = self.model_cfg.LOSS_WEIGHTS.get('z', 0.2)
 
             layer_loss = loss_reg_gmm * weight_reg + loss_cls.sum(dim=-1) * weight_cls + loss_reg_heading * weight_heading + loss_reg_z * weight_z
