@@ -37,7 +37,7 @@ def build_dataloader(dataset_cfg, batch_size, dist, workers=4,
 
     if dist:
         if training:
-            sampler = torch.utils.data.distributed.DistributedSampler(dataset, shuffle=False)
+            sampler = torch.utils.data.distributed.DistributedSampler(dataset)
         else:
             rank, world_size = common_utils.get_dist_info()
             sampler = torch.utils.data.distributed.DistributedSampler(dataset, world_size, rank, shuffle=False)

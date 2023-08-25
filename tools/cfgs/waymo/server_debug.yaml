@@ -26,7 +26,7 @@ DATA_CONFIG:
     NUM_POINTS_EACH_POLYLINE: 20
     VECTOR_BREAK_DIST_THRESH: 1.0
 
-    NUM_OF_SRC_POLYLINES: 768
+    NUM_OF_SRC_POLYLINES: 512
     CENTER_OFFSET_OF_MAP: &center_offset [30.0, 0]
 
 
@@ -45,7 +45,7 @@ MODEL:
         NUM_LAYER_IN_PRE_MLP_MAP: 3
 
         D_MODEL: 256
-        NUM_ATTN_LAYERS: 6
+        NUM_ATTN_LAYERS: 3
         NUM_ATTN_HEAD: 8
         DROPOUT_OF_ATTN: 0.1
 
@@ -62,7 +62,7 @@ MODEL:
 
         INTENTION_POINTS_FILE: data/waymo/cluster_64_center_dict.pkl
 
-        D_MODEL: 512
+        D_MODEL: 256
         NUM_DECODER_LAYERS: 3
         NUM_ATTN_HEAD: 8
         MAP_D_MODEL: 256

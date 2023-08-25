@@ -67,12 +67,12 @@ class WaymoDataset(DatasetTemplate):
         return len(self.infos)
 
     def __getitem__(self, index):
-        try:
-            ret_infos = self.data_cache[index]
-        except:
-            ret_infos = self.create_scene_level_data(index)
-            self.data_cache[index] = ret_infos
-
+        # try:
+        #     ret_infos = self.data_cache[index]
+        # except:
+        #     ret_infos = self.create_scene_level_data(index)
+        #     self.data_cache[index] = ret_infos
+        ret_infos = self.create_scene_level_data(index)
         return ret_infos
 
     def create_scene_level_data(self, index):
