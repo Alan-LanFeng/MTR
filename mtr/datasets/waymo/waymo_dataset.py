@@ -24,6 +24,7 @@ class WaymoDataset(DatasetTemplate):
 
         self.infos = self.get_all_infos(self.data_root / self.dataset_cfg.INFO_FILE[self.mode])
         self.logger.info(f'Total scenes after filters: {len(self.infos)}')
+        self.data_cache = {}
 
     def get_all_infos(self, info_path):
         self.logger.info(f'Start to load infos from {info_path}')
@@ -66,7 +67,11 @@ class WaymoDataset(DatasetTemplate):
         return len(self.infos)
 
     def __getitem__(self, index):
-        ret_infos = self.create_scene_level_data(index)
+        try:
+            ret_infos = self.data_cache[index]
+        except:
+            ret_infos = self.create_scene_level_data(index)
+            self.data_cache[index] = ret_infos
 
         return ret_infos
 
