@@ -141,19 +141,20 @@ def train_model(model, optimizer, train_loader, optim_cfg,
             if scheduler is None:
                 learning_rate_decay(cur_epoch, optimizer, optim_cfg)
 
-            # train one epoch
-            accumulated_iter = train_one_epoch(
-                model, optimizer, train_loader,
-                accumulated_iter=accumulated_iter, optim_cfg=optim_cfg,
-                rank=rank, tbar=tbar, tb_log=tb_log,
-                leave_pbar=(cur_epoch + 1 == total_epochs),
-                total_it_each_epoch=total_it_each_epoch,
-                dataloader_iter=dataloader_iter,
-                scheduler=scheduler, cur_epoch=cur_epoch, total_epochs=total_epochs,
-                logger=logger, logger_iter_interval=logger_iter_interval,
-                ckpt_save_dir=ckpt_save_dir, ckpt_save_time_interval=ckpt_save_time_interval
-            )
 
+            # train one epoch
+            # accumulated_iter = train_one_epoch(
+            #     model, optimizer, train_loader,
+            #     accumulated_iter=accumulated_iter, optim_cfg=optim_cfg,
+            #     rank=rank, tbar=tbar, tb_log=tb_log,
+            #     leave_pbar=(cur_epoch + 1 == total_epochs),
+            #     total_it_each_epoch=total_it_each_epoch,
+            #     dataloader_iter=dataloader_iter,
+            #     scheduler=scheduler, cur_epoch=cur_epoch, total_epochs=total_epochs,
+            #     logger=logger, logger_iter_interval=logger_iter_interval,
+            #     ckpt_save_dir=ckpt_save_dir, ckpt_save_time_interval=ckpt_save_time_interval
+            # )
+            accumulated_iter = 1
             # save trained model
             trained_epoch = cur_epoch + 1
             if (trained_epoch % ckpt_save_interval == 0 or trained_epoch in [1, 2, 4] or trained_epoch > total_epochs - 10) and rank == 0:
