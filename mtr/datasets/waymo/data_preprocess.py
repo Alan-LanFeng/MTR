@@ -176,7 +176,7 @@ def process_waymo_data_with_scenario_proto(data_file, output_path=None):
         info = {}
         scenario = scenario_pb2.Scenario()
         scenario.ParseFromString(bytearray(data.numpy()))
-        info['scenario'] = scenario
+
         info['scenario_id'] = scenario.scenario_id
         info['timestamps_seconds'] = list(scenario.timestamps_seconds)  # list of int of shape (91)
         info['current_time_index'] = scenario.current_time_index  # int, 10
@@ -198,7 +198,8 @@ def process_waymo_data_with_scenario_proto(data_file, output_path=None):
         save_infos = {
             'track_infos': track_infos,
             'dynamic_map_infos': dynamic_map_infos,
-            'map_infos': map_infos
+            'map_infos': map_infos,
+            'scenario' : scenario
         }
         save_infos.update(info)
 
