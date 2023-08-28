@@ -2,9 +2,10 @@
 # Published at NeurIPS 2022
 # Written by Shaoshuai Shi 
 # All Rights Reserved
+import sys
+sys.path.append("/data0/pengzh/wod/")
 
-
-import sys, os
+import os
 import numpy as np
 import pickle
 import tensorflow as tf
