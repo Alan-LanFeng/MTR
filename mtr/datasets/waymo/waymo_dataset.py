@@ -544,10 +544,10 @@ class WaymoDataset(DatasetTemplate):
 
             return metric_result_str, metric_results
         elif eval_method == 'sim_agents':
-            from .waymo_eval import sim_agents_evaluation
+            #from .waymo_eval import sim_agents_evaluation
             from waymo_open_dataset.protos import sim_agents_submission_pb2
             from waymo_open_dataset.wdl_limited.sim_agents_metrics import metrics
-            from waymo_open_dataset.wdl_limited.sim_agents_metrics import metric_features
+            #from waymo_open_dataset.wdl_limited.sim_agents_metrics import metric_features
             scene_id = [dic['scenario_id'] for dic in pred_dicts]
             unique_scene_id = np.unique(scene_id)
             # get project root path
