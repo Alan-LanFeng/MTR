@@ -10,7 +10,7 @@ import glob
 import os
 from pathlib import Path
 import math
-
+import wandb
 import torch
 import torch.nn as nn
 import torch.optim.lr_scheduler as lr_sched
@@ -54,6 +54,8 @@ def parse_config():
     parser.add_argument('--ckpt_save_time_interval', type=int, default=300, help='in terms of seconds')
 
     parser.add_argument('--add_worker_init_fn', action='store_true', default=False, help='')
+    parser.add_argument('--wandb', action='store_true', default=False, help='')
+
     args = parser.parse_args()
 
     cfg_from_yaml_file(args.cfg_file, cfg)
@@ -224,6 +226,9 @@ def main():
 
     eval_output_dir = output_dir / 'eval' / 'eval_with_train'
     eval_output_dir.mkdir(parents=True, exist_ok=True)
+
+    if args.wandb and cfg.LOCAL_RANK == 0:
+        wandb.init(project="mtr", name=args.extra_tag, config=cfg)
 
     # -----------------------start training---------------------------
     logger.info('**********************Start training %s/%s(%s)**********************'

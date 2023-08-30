@@ -9,7 +9,7 @@ import os
 import torch
 import tqdm
 from torch.nn.utils import clip_grad_norm_
-
+import wandb
 
 def train_one_epoch(model, optimizer, train_loader, accumulated_iter, optim_cfg,
                     rank, tbar, total_it_each_epoch, dataloader_iter, tb_log=None, leave_pbar=False, scheduler=None, show_grad_curve=False,
@@ -143,18 +143,19 @@ def train_model(model, optimizer, train_loader, optim_cfg,
 
 
             # train one epoch
-            # accumulated_iter = train_one_epoch(
-            #     model, optimizer, train_loader,
-            #     accumulated_iter=accumulated_iter, optim_cfg=optim_cfg,
-            #     rank=rank, tbar=tbar, tb_log=tb_log,
-            #     leave_pbar=(cur_epoch + 1 == total_epochs),
-            #     total_it_each_epoch=total_it_each_epoch,
-            #     dataloader_iter=dataloader_iter,
-            #     scheduler=scheduler, cur_epoch=cur_epoch, total_epochs=total_epochs,
-            #     logger=logger, logger_iter_interval=logger_iter_interval,
-            #     ckpt_save_dir=ckpt_save_dir, ckpt_save_time_interval=ckpt_save_time_interval
-            # )
-            accumulated_iter = 1
+            accumulated_iter = train_one_epoch(
+                model, optimizer, train_loader,
+                accumulated_iter=accumulated_iter, optim_cfg=optim_cfg,
+                rank=rank, tbar=tbar, tb_log=tb_log,
+                leave_pbar=(cur_epoch + 1 == total_epochs),
+                total_it_each_epoch=total_it_each_epoch,
+                dataloader_iter=dataloader_iter,
+                scheduler=scheduler, cur_epoch=cur_epoch, total_epochs=total_epochs,
+                logger=logger, logger_iter_interval=logger_iter_interval,
+                ckpt_save_dir=ckpt_save_dir, ckpt_save_time_interval=ckpt_save_time_interval
+            )
+
+
             # save trained model
             trained_epoch = cur_epoch + 1
             if (trained_epoch % ckpt_save_interval == 0 or trained_epoch in [1, 2, 4] or trained_epoch > total_epochs - 10) and rank == 0:
@@ -184,6 +185,9 @@ def train_model(model, optimizer, train_loader, optim_cfg,
                     result_dir=eval_output_dir, save_to_file=False, logger_iter_interval=max(logger_iter_interval // 5, 1)
                 )
                 if cfg.LOCAL_RANK == 0:
+                    if wandb.run is not None:
+                        wandb.log(tb_dict, step=trained_epoch)
+
                     for key, val in tb_dict.items():
                         tb_log.add_scalar('eval/' + key, val, trained_epoch)
 
