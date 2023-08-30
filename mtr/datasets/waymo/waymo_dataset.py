@@ -579,7 +579,10 @@ class WaymoDataset(DatasetTemplate):
                 break
             total_result = get_tb_from_metric_results(result_list)
 
-            return total_result,total_result
+            readable_str = "\n".join([f"{key}: {value:.4f}" for key, value in total_result.items()])
+
+
+            return readable_str,total_result
 
         else:
             raise NotImplementedError

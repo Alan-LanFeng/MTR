@@ -3,9 +3,6 @@
 # Written by Shaoshuai Shi 
 # All Rights Reserved
 
-import sys
-sys.path.append("/data0/pengzh/wod/")
-
 import _init_path
 import argparse
 import datetime

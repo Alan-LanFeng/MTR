@@ -136,7 +136,7 @@ def eval_one_epoch_sim(cfg, model, dataloader, epoch_id, logger, dist_test=False
                         f'time_cost: {progress_bar.format_interval(past_time)}/{progress_bar.format_interval(remaining_time)}, '
                         f'{disp_str}')
 
-        break
+
 
     if cfg.LOCAL_RANK == 0:
         progress_bar.close()
