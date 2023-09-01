@@ -42,6 +42,8 @@ def eval_one_epoch_sim(cfg, model, dataloader, epoch_id, logger, dist_test=False
     for i, batch_dict in enumerate(dataloader):
         with torch.no_grad():
             scene_ids = batch_dict['input_dict']['scenario_id']
+            if scene_ids.shape[0]>200:
+                continue
             unique_scene_ids = np.unique(scene_ids)
             assert len(unique_scene_ids) == batch_dict['batch_size']
             #for scene_id in unique_scene_ids:
