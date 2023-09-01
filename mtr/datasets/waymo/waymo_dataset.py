@@ -544,6 +544,11 @@ class WaymoDataset(DatasetTemplate):
 
             return metric_result_str, metric_results
         elif eval_method == 'sim_agents':
+            import tensorflow as tf
+            tf.config.set_visible_devices([], 'GPU')
+            visible_devices = tf.config.get_visible_devices()
+            for device in visible_devices:
+                assert device.device_type != 'GPU'
             #from .waymo_eval import sim_agents_evaluation
             from waymo_open_dataset.protos import sim_agents_submission_pb2
             from waymo_open_dataset.wdl_limited.sim_agents_metrics import metrics
@@ -558,25 +563,27 @@ class WaymoDataset(DatasetTemplate):
                     info = pickle.load(f)
                 scenario = info['scenario']
 
-                joint_scenes = []
-                for j in range(32):
-                    j_s = get_joint_scene(scene_pred_dicts,j%6)
-                    submission_specs.validate_joint_scene(j_s, scenario)
-                    joint_scenes.append(j_s)
-                    # single_scene_features = metric_features.compute_metric_features(
-                    #     scenario, j_s)
-                    #print(single_scene_features)
+                try:
+                    joint_scenes = []
+                    for j in range(32):
+                        j_s = get_joint_scene(scene_pred_dicts,j%6)
+                        submission_specs.validate_joint_scene(j_s, scenario)
+                        joint_scenes.append(j_s)
+                        # single_scene_features = metric_features.compute_metric_features(
+                        #     scenario, j_s)
+                        #print(single_scene_features)
 
-                scenario_rollouts = sim_agents_submission_pb2.ScenarioRollouts(
-                    # Note: remember to include the Scenario ID in the proto message.
-                    joint_scenes=joint_scenes, scenario_id=scenario.scenario_id)
-                submission_specs.validate_scenario_rollouts(scenario_rollouts, scenario)
+                    scenario_rollouts = sim_agents_submission_pb2.ScenarioRollouts(
+                        # Note: remember to include the Scenario ID in the proto message.
+                        joint_scenes=joint_scenes, scenario_id=scenario.scenario_id)
+                    submission_specs.validate_scenario_rollouts(scenario_rollouts, scenario)
+                    config = metrics.load_metrics_config()
+                    scenario_metrics = metrics.compute_scenario_metrics_for_bundle(
+                        config, scenario, scenario_rollouts)
+                    result_list.append(scenario_metrics)
+                except:
+                    continue
 
-                config = metrics.load_metrics_config()
-                scenario_metrics = metrics.compute_scenario_metrics_for_bundle(
-                    config, scenario, scenario_rollouts)
-                result_list.append(scenario_metrics)
-                break
             total_result = get_tb_from_metric_results(result_list)
 
             readable_str = "\n".join([f"{key}: {value:.4f}" for key, value in total_result.items()])
