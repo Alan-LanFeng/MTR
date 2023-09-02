@@ -2,6 +2,8 @@
 # Published at NeurIPS 2022
 # Written by Shaoshuai Shi 
 # All Rights Reserved
+import sys
+sys.path.append("/data0/pengzh/wod/")
 
 import _init_path
 import argparse
@@ -217,7 +219,7 @@ def main():
     logger.info(model)
     num_total_params = sum([x.numel() for x in model.parameters()])
     logger.info(f'Total number of parameters: {num_total_params}')
-    args.batch_size = 4
+    args.batch_size = 1
     test_set, test_loader, sampler = build_dataloader(
         dataset_cfg=cfg.DATA_CONFIG,
         batch_size=args.batch_size,
