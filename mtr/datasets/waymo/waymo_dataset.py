@@ -552,12 +552,13 @@ class WaymoDataset(DatasetTemplate):
             #from .waymo_eval import sim_agents_evaluation
             from waymo_open_dataset.protos import sim_agents_submission_pb2
             from waymo_open_dataset.wdl_limited.sim_agents_metrics import metrics
+            from tqdm import tqdm
             #from waymo_open_dataset.wdl_limited.sim_agents_metrics import metric_features
             scene_id = [dic['scenario_id'] for dic in pred_dicts]
             unique_scene_id = np.unique(scene_id)
             # get project root path
             result_list = []
-            for id in unique_scene_id:
+            for id in tqdm(unique_scene_id):
                 scene_pred_dicts = [dic for dic in pred_dicts if dic['scenario_id'] == id]
                 with open(self.data_path / f'sample_{id}.pkl', 'rb') as f:
                     info = pickle.load(f)
