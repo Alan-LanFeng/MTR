@@ -37,7 +37,7 @@ if __name__ == '__main__':
 
     setup(
         name='MotionTransformer',
-        version=version,
+        version='test',
         description='Motion Transformer (MTR), published at NeurIPS 2022',
         author='Shaoshuai Shi',
         author_email='shaoshuaics@gmail.com',
